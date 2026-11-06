@@ -23,7 +23,7 @@ import type { MysqlCredentials } from '../validations/mysql';
 import type { IntrospectStage, IntrospectStatus } from '../views';
 import { humanLog, IntrospectProgress } from '../views';
 import { writeResult } from './generate-common';
-import { relationsToTypeScript, summarizeSchemaMappingErrors } from './pull-common';
+import { relationsToTypeScript, schemaImportFor, summarizeSchemaMappingErrors } from './pull-common';
 
 export const handle = async (
 	casing: Casing,
@@ -70,7 +70,7 @@ export const handle = async (
 	}
 
 	const ts = ddlToTypeScript(ddl, schema.viewColumns, casing, 'mysql');
-	const relations = relationsToTypeScript(mysqlToRelationsPull(ddl), casing);
+	const relations = relationsToTypeScript(mysqlToRelationsPull(ddl), casing, schemaImportFor(out));
 
 	const schemaFile = join(out, 'schema.ts');
 	writeFileSync(schemaFile, ts.file);

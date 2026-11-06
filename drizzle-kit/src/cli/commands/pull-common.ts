@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { plural, singular } from 'pluralize';
 import { paramNameFor } from '../../dialects/postgres/typescript';
 import { withCasing } from '../../dialects/pull-utils';
@@ -44,10 +46,39 @@ function prepareNameFor(name: string, tableColumns: string[]) {
 	return tableColumns.includes(name) ? `${name}Relation` : name;
 }
 
+const isEsmProject = (dir: string): boolean => {
+	let current = resolve(dir);
+	for (;;) {
+		const pkg = join(current, 'package.json');
+		if (existsSync(pkg)) {
+			try {
+				return JSON.parse(readFileSync(pkg, 'utf8')).type === 'module';
+			} catch {
+				return false;
+			}
+		}
+		const parent = dirname(current);
+		if (parent === current) return false;
+		current = parent;
+	}
+};
+
+/**
+ * The specifier `relations.ts` uses to import `schema.ts` from the same folder.
+ *
+ * A project whose nearest package.json has `"type": "module"` runs the generated
+ * files as ES modules, where Node and `moduleResolution: nodenext` require an
+ * explicit extension; `./schema.js` resolves to `schema.ts` for tsc, tsx, bun
+ * and bundlers alike. Every other project keeps the extensionless form.
+ */
+export const schemaImportFor = (out: string): string => {
+	return isEsmProject(out) ? './schema.js' : './schema';
+};
+
 export const relationsToTypeScript = (
 	schema: SchemaForPull,
 	casing: Casing,
-	schemaPath?: string, // for tests purposes
+	schemaPath: string = './schema', // see schemaImportFor
 ) => {
 	const imports: string[] = [];
 	const tableRelations: Record<
@@ -196,9 +227,7 @@ export const relationsToTypeScript = (
 		});
 	});
 
-	const importsTs = `import { defineRelations } from "drizzle-orm";\nimport * as schema from "${
-		schemaPath ?? './schema'
-	}";\n\n`;
+	const importsTs = `import { defineRelations } from "drizzle-orm";\nimport * as schema from "${schemaPath}";\n\n`;
 
 	let relationString = `export const relations = defineRelations(schema, (r) => ({`;
 

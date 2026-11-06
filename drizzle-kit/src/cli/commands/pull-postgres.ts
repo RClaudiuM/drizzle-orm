@@ -39,7 +39,7 @@ import type { PostgresCredentials } from '../validations/postgres';
 import type { IntrospectStage, IntrospectStatus } from '../views';
 import { humanLog, IntrospectProgress } from '../views';
 import { writeResult } from './generate-common';
-import { relationsToTypeScript, summarizeSchemaMappingErrors } from './pull-common';
+import { relationsToTypeScript, schemaImportFor, summarizeSchemaMappingErrors } from './pull-common';
 
 export const handle = async (
 	casing: Casing,
@@ -94,7 +94,7 @@ export const handle = async (
 	}
 
 	const ts = postgresSchemaToTypeScript(ddl2, res.viewColumns, casing);
-	const relationsTs = relationsToTypeScript(postgresToRelationsPull(ddl2), casing);
+	const relationsTs = relationsToTypeScript(postgresToRelationsPull(ddl2), casing, schemaImportFor(out));
 
 	const schemaFile = join(out, 'schema.ts');
 	writeFileSync(schemaFile, ts.file);

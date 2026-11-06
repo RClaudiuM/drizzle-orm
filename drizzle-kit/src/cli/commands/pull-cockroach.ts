@@ -34,7 +34,7 @@ import type { CockroachCredentials } from '../validations/cockroach';
 import type { Casing, EntitiesFilterConfig } from '../validations/common';
 import { humanLog, IntrospectProgress, type IntrospectStage, type IntrospectStatus } from '../views';
 import { writeResult } from './generate-common';
-import { relationsToTypeScript, summarizeSchemaMappingErrors } from './pull-common';
+import { relationsToTypeScript, schemaImportFor, summarizeSchemaMappingErrors } from './pull-common';
 
 export const handle = async (
 	casing: Casing,
@@ -82,7 +82,7 @@ export const handle = async (
 	}
 
 	const ts = cockroachSequenceSchemaToTypeScript(ddl2, res.viewColumns, casing);
-	const relationsTs = relationsToTypeScript(cockroachToRelationsPull(ddl2), casing);
+	const relationsTs = relationsToTypeScript(cockroachToRelationsPull(ddl2), casing, schemaImportFor(out));
 
 	const schemaFile = join(out, 'schema.ts');
 	writeFileSync(schemaFile, ts.file);

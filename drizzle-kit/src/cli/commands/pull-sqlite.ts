@@ -21,7 +21,7 @@ import type { Casing } from '../validations/common';
 import type { SqliteCredentials } from '../validations/sqlite';
 import { humanLog, IntrospectProgress, type IntrospectStage, type IntrospectStatus } from '../views';
 import { writeResult } from './generate-common';
-import { relationsToTypeScript, summarizeSchemaMappingErrors } from './pull-common';
+import { relationsToTypeScript, schemaImportFor, summarizeSchemaMappingErrors } from './pull-common';
 
 export const handle = async (
 	casing: Casing,
@@ -65,7 +65,7 @@ export const handle = async (
 	}
 
 	const ts = ddlToTypeScript(ddl, casing, viewColumns, type);
-	const relationsTs = relationsToTypeScript(sqliteToRelationsPull(ddl), casing);
+	const relationsTs = relationsToTypeScript(sqliteToRelationsPull(ddl), casing, schemaImportFor(out));
 
 	const schemaFile = join(out, 'schema.ts');
 	writeFileSync(schemaFile, ts.file);
